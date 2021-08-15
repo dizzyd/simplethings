@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "dizzyd.simplethings.mixins",
+  "compatibilityLevel": "JAVA_16",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": []
+}

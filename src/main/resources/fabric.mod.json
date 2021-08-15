@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "mod_id",
+  "version": "${version}",
+  "name": "SimpleThings",
+  "description": "Little QoL Things",
+  "authors": [
+    "dizzyd"
+  ],
+  "contact": {
+    "homepage": "https://github.com/dizzyd/simplethings/",
+    "issues": "https://github.com/dizzyd/simplethings/issues/",
+    "sources": "https://github.com/dizzyd/simplethings/"
+  },
+  "license": "GNU Lesser General Public License version 3 (LGPLv3)",
+  "icon": "assets/mod_name/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "dizzyd.simplethings.SimpleThings"
+      }
+    ]
+  },
+  "mixins": [
+    "mod_id.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.11.6",
+    "fabric": "*",
+    "fabric-language-kotlin": ">=1.6.3+kotlin.1.5.21",
+    "minecraft": "1.17.x",
+    "java": ">=16"
+  }
+}
