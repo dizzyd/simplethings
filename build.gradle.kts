@@ -1,4 +1,5 @@
 plugins {
+    id("maven-publish")
     id("fabric-loom")
     val kotlinVersion: String by System.getProperties()
     kotlin("jvm").version(kotlinVersion)
@@ -7,12 +8,17 @@ base {
     val archivesBaseName: String by project
     archivesName.set(archivesBaseName)
 }
+
 val modVersion: String by project
 version = modVersion
 val mavenGroup: String by project
 group = mavenGroup
+
 minecraft {}
-repositories {}
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     val minecraftVersion: String by project
     minecraft("com.mojang:minecraft:$minecraftVersion")
@@ -25,6 +31,28 @@ dependencies {
     val fabricKotlinVersion: String by project
     modImplementation("net.fabricmc:fabric-language-kotlin:$fabricKotlinVersion")
 }
+
+val remapJar = tasks.getByName<net.fabricmc.loom.task.RemapJarTask>("remapJar")
+
+configure<PublishingExtension> {
+    publications {
+        create<MavenPublication>("artifact") {
+            artifact(remapJar) {
+                builtBy(remapJar)
+            }
+        }
+    }
+    repositories {
+        maven {
+            url = uri("s3://files.mcdex.net/maven2")
+            credentials(AwsCredentials::class) {
+                accessKey = System.getenv("AWS_ACCESS_KEY_ID")
+                secretKey = System.getenv("AWS_SECRET_ACCESS_KEY")
+            }
+        }
+    }
+}
+
 tasks {
     val javaVersion = JavaVersion.VERSION_16
     withType<JavaCompile> {
@@ -50,3 +78,4 @@ tasks {
         withSourcesJar()
     }
 }
+
