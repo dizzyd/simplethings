@@ -13,6 +13,7 @@ import net.minecraft.item.ItemPlacementContext
 import net.minecraft.item.ItemStack
 import net.minecraft.text.LiteralText
 import net.minecraft.world.World
+import org.apache.logging.log4j.core.util.UuidUtil
 import java.util.concurrent.ThreadLocalRandom
 
 class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().group(ItemGroup.MISC)){
@@ -21,7 +22,7 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
             if (blockEntity is EntangledBlockEntity) {
                 val stack = ItemStack(SimpleThings.ENTANGLED_BLOCK_ITEM, 1)
                 stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
-                    .putLong("entangled_uuid", blockEntity.entangledId)
+                    .putString("entangled_uuid", blockEntity.entangledId)
                 return stack
             }
 
@@ -33,7 +34,7 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
     override fun onCraft(stack: ItemStack?, world: World?, player: PlayerEntity?) {
         if (!world!!.isClient) {
             stack!!.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
-                .putLong("entangled_uuid", ThreadLocalRandom.current().nextLong(Long.MAX_VALUE))
+                .putString("entangled_uuid", UuidUtil.getTimeBasedUuid().toString())
         }
     }
 
@@ -42,8 +43,8 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
             return false
         }
 
-        val entangledId = context!!.stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
-            .getLong("entangled_uuid")
+        val entangledId = context.stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
+            .getString("entangled_uuid")
 
         // Get destination position; if there isn't one, we allow placement using normal rules
         val destPos = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(entangledId, context.blockPos)

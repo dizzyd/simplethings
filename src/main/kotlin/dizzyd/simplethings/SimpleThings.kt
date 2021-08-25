@@ -24,12 +24,12 @@ object SimpleThings: ModInitializer, ServerLifecycleEvents.ServerStarted {
     lateinit var ENTANGLED_BLOCK_MGR: EntangledBlockManager
 
     override fun onInitialize() {
-        Registry.register(Registry.BLOCK, Identifier("simplethings", "entangled_block"),
+        Registry.register(Registry.BLOCK, Identifier(MOD_ID, "entangled_block"),
             ENTANGLED_BLOCK)
-        ENTANGLED_BLOCK_ITEM = Registry.register(Registry.ITEM, Identifier("simplethings", "entangled_block"),
+        ENTANGLED_BLOCK_ITEM = Registry.register(Registry.ITEM, Identifier(MOD_ID, "entangled_block"),
             EntangledBlockItem(ENTANGLED_BLOCK))
 
-        ENTANGLED_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "simplethings:entangled_block_entity",
+        ENTANGLED_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "$MOD_ID:entangled_block_entity",
             FabricBlockEntityTypeBuilder.create(::EntangledBlockEntity, ENTANGLED_BLOCK).build(null))
 
         ServerLifecycleEvents.SERVER_STARTED.register(this)

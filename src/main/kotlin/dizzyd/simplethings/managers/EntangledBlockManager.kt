@@ -7,9 +7,9 @@ import org.apache.logging.log4j.LogManager
 
 class EntangledBlockManager: PersistentState() {
 
-    val blocks = HashMap<Long, MutableSet<BlockPos>>()
+    val blocks = HashMap<String, MutableSet<BlockPos>>()
 
-    fun register(id: Long, pos: BlockPos) {
+    fun register(id: String, pos: BlockPos) {
         LOGGER.info("Registered entangled block $id: at $pos")
         val positions = blocks.getOrDefault(id, mutableSetOf())
         positions.add(pos)
@@ -18,7 +18,7 @@ class EntangledBlockManager: PersistentState() {
         this.markDirty()
     }
 
-    fun unregister(id: Long, pos: BlockPos) {
+    fun unregister(id: String, pos: BlockPos) {
         LOGGER.info("Unregistered entangled block $id: at $pos")
         val positions = blocks.getOrDefault(id, mutableSetOf())
         positions.remove(pos)
@@ -27,7 +27,7 @@ class EntangledBlockManager: PersistentState() {
         this.markDirty()
     }
 
-    fun getDestination(id: Long, fromPos: BlockPos): BlockPos? {
+    fun getDestination(id: String, fromPos: BlockPos): BlockPos? {
         val positions = blocks.getOrDefault(id, mutableSetOf())
         LOGGER.info("Positions: $positions")
         return positions.firstOrNull{ pos -> pos != fromPos }
@@ -56,7 +56,7 @@ class EntangledBlockManager: PersistentState() {
                 if (positionLongs.size > 0) {
                     val positions =
                         positionLongs.map { pos -> BlockPos.fromLong(pos) }.toMutableSet()
-                    blockManager.blocks.put(k.toLong(), positions)
+                    blockManager.blocks.put(k, positions)
                 }
             }
 

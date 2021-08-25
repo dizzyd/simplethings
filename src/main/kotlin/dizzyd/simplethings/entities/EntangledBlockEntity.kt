@@ -9,15 +9,15 @@ import net.minecraft.util.math.BlockPos
 class EntangledBlockEntity(pos: BlockPos, state: BlockState):
     BlockEntity(SimpleThings.ENTANGLED_BLOCK_ENTITY, pos, state) {
 
-    var entangledId: Long = 0
+    var entangledId = ""
 
     override fun writeNbt(nbt: NbtCompound?): NbtCompound {
-        nbt?.putLong("entangled_uuid", entangledId)
+        nbt?.putString("entangled_uuid", entangledId)
         return super.writeNbt(nbt)
     }
 
     override fun readNbt(nbt: NbtCompound?) {
-        entangledId = nbt!!.getLong("entangled_uuid")
+        entangledId = nbt!!.getString("entangled_uuid")
     }
 
     override fun markRemoved() {
