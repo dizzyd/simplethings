@@ -29,7 +29,6 @@ class EntangledBlockManager: PersistentState() {
 
     fun getDestination(id: String, fromPos: BlockPos): BlockPos? {
         val positions = blocks.getOrDefault(id, mutableSetOf())
-        LOGGER.info("Positions: $positions")
         return positions.firstOrNull{ pos -> pos != fromPos }
     }
 
