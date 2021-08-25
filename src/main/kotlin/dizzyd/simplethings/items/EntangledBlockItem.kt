@@ -5,14 +5,31 @@ import dizzyd.simplethings.blocks.EntangledBlock
 import dizzyd.simplethings.entities.EntangledBlockEntity
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.minecraft.block.BlockState
+import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.item.*
+import net.minecraft.item.BlockItem
+import net.minecraft.item.ItemGroup
+import net.minecraft.item.ItemPlacementContext
+import net.minecraft.item.ItemStack
 import net.minecraft.text.LiteralText
-import net.minecraft.util.ActionResult
 import net.minecraft.world.World
 import java.util.concurrent.ThreadLocalRandom
 
 class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().group(ItemGroup.MISC)){
+    companion object {
+        fun stackFromBlockEntity(blockEntity: BlockEntity?): ItemStack? {
+            if (blockEntity is EntangledBlockEntity) {
+                val stack = ItemStack(SimpleThings.ENTANGLED_BLOCK_ITEM, 1)
+                stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
+                    .putLong("entangled_uuid", blockEntity.entangledId)
+                return stack
+            }
+
+            return null
+        }
+    }
+
+
     override fun onCraft(stack: ItemStack?, world: World?, player: PlayerEntity?) {
         if (!world!!.isClient) {
             stack!!.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
@@ -28,15 +45,11 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
         val entangledId = context!!.stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
             .getLong("entangled_uuid")
 
+        // Get destination position; if there isn't one, we allow placement using normal rules
         val destPos = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(entangledId, context.blockPos)
+            ?: return super.canPlace(context, state)
 
-        // No destination registered; we don't need to check that it's in the same world
-        if (destPos == null) {
-            return super.canPlace(context, state)
-        }
-
-        // We have a destination block position; ensure that it's registered in the current
-        // world
+        // We have a destination block position; ensure that it's registered in the current world
         val blockEntity = context.world.getBlockEntity(destPos)
         if (blockEntity is EntangledBlockEntity) {
             return super.canPlace(context, state)

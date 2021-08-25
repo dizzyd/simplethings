@@ -2,6 +2,7 @@ package dizzyd.simplethings.blocks
 
 import dizzyd.simplethings.SimpleThings
 import dizzyd.simplethings.entities.EntangledBlockEntity
+import dizzyd.simplethings.items.EntangledBlockItem
 import net.fabricmc.fabric.api.`object`.builder.v1.block.FabricBlockSettings
 import net.minecraft.block.Block
 import net.minecraft.block.BlockEntityProvider
@@ -10,21 +11,15 @@ import net.minecraft.block.Material
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.loot.context.LootContext
-import net.minecraft.loot.context.LootContextParameter
 import net.minecraft.loot.context.LootContextParameters
-import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
-import net.minecraft.world.WorldAccess
 import org.apache.logging.log4j.LogManager
-import java.util.concurrent.ThreadLocalRandom
-import java.util.logging.Logger
 
-class EntangledBlock: Block(FabricBlockSettings.of(Material.METAL).strength(4.0f)), BlockEntityProvider {
+class EntangledBlock : Block(FabricBlockSettings.of(Material.METAL).strength(4.0f)),
+    BlockEntityProvider {
     companion object {
         val LOGGER = LogManager.getLogger()
     }
@@ -55,12 +50,9 @@ class EntangledBlock: Block(FabricBlockSettings.of(Material.METAL).strength(4.0f
             return
         }
 
-        LOGGER.info("Stepping on $pos")
-
         val blockEntity = world?.getBlockEntity(pos)
         if (blockEntity is EntangledBlockEntity) {
             val dest = blockEntity.getDestination()
-            LOGGER.info("Destination: $dest")
             if (dest != null) {
                 entity?.teleport(dest.x.toDouble(), dest.y.toDouble(), dest.z.toDouble())
             }
@@ -71,12 +63,17 @@ class EntangledBlock: Block(FabricBlockSettings.of(Material.METAL).strength(4.0f
         state: BlockState?,
         builder: LootContext.Builder?
     ): MutableList<ItemStack> {
-        val stack = ItemStack(SimpleThings.ENTANGLED_BLOCK_ITEM, 1)
+        // Construct a stack from the underlying block entity; this needs to be done so
+        // that the resulting drop has the appropriate associated UUID
         val blockEntity = builder?.get(LootContextParameters.BLOCK_ENTITY) as BlockEntity
-        if (blockEntity is EntangledBlockEntity) {
-            stack.getOrCreateSubNbt(BlockItem.BLOCK_ENTITY_TAG_KEY)
-                .putLong("entangled_uuid", blockEntity.entangledId)
+        val stack = EntangledBlockItem.stackFromBlockEntity(blockEntity)
+        if (stack != null) {
+            return mutableListOf(stack)
         }
-        return MutableList(1) { stack }
+
+        // This should never happen, but adding a log message so if a world gets corrupted/out of sync
+        // we have a shot at knowing where
+        LOGGER.error("Missing EntangledBlockEntity at ${blockEntity.pos}; falling back to loot tables for drops")
+        return super.getDroppedStacks(state, builder)
     }
 }
