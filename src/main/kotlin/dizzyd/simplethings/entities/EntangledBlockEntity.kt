@@ -20,14 +20,6 @@ class EntangledBlockEntity(pos: BlockPos, state: BlockState):
         entangledId = nbt!!.getString("entangled_uuid")
     }
 
-    override fun markRemoved() {
-        if (world?.isClient == false) {
-            SimpleThings.ENTANGLED_BLOCK_MGR.unregister(entangledId, pos)
-        }
-
-        super.markRemoved()
-    }
-
     fun getDestination(): BlockPos? {
         // Validate that the destination has the other entangled block
         val dest = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(entangledId, pos)
@@ -37,7 +29,6 @@ class EntangledBlockEntity(pos: BlockPos, state: BlockState):
                 return dest
             }
         }
-
         return null
     }
 }

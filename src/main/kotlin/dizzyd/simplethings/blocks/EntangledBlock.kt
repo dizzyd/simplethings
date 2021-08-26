@@ -11,6 +11,7 @@ import net.minecraft.block.Material
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.loot.context.LootContext
 import net.minecraft.loot.context.LootContextParameters
@@ -49,6 +50,19 @@ class EntangledBlock : Block(FabricBlockSettings.of(Material.METAL).strength(4.0
         }
     }
 
+    override fun onBreak(world: World?, pos: BlockPos?, state: BlockState?, player: PlayerEntity?) {
+        if (world?.isClient == true) {
+            return
+        }
+
+        val blockEntity = world?.getBlockEntity(pos)
+        if (blockEntity is EntangledBlockEntity) {
+            SimpleThings.ENTANGLED_BLOCK_MGR.unregister(blockEntity.entangledId, pos!!)
+        }
+
+        super.onBreak(world, pos, state, player)
+    }
+
     override fun onSteppedOn(world: World?, pos: BlockPos?, state: BlockState?, entity: Entity?) {
         if (world?.isClient == true) {
             return
@@ -78,6 +92,8 @@ class EntangledBlock : Block(FabricBlockSettings.of(Material.METAL).strength(4.0
 
                 // Update last teleport timestamp to prevent people getting stuck in loops
                 LAST_TELEPORT.put(entity.uuid, now)
+            } else {
+                LOGGER.info("Destination for $pos is null!")
             }
         }
     }

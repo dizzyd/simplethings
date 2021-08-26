@@ -10,19 +10,19 @@ class EntangledBlockManager: PersistentState() {
     val blocks = HashMap<String, MutableSet<BlockPos>>()
 
     fun register(id: String, pos: BlockPos) {
-        LOGGER.info("Registered entangled block $id: at $pos")
         val positions = blocks.getOrDefault(id, mutableSetOf())
         positions.add(pos)
         blocks.put(id, positions)
+        LOGGER.info("Registered entangled block $id at $pos: $positions")
 
         this.markDirty()
     }
 
     fun unregister(id: String, pos: BlockPos) {
-        LOGGER.info("Unregistered entangled block $id: at $pos")
         val positions = blocks.getOrDefault(id, mutableSetOf())
         positions.remove(pos)
         blocks.put(id, positions)
+        LOGGER.info("Unregistered entangled block $id at $pos: $positions")
 
         this.markDirty()
     }
