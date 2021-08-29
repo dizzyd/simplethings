@@ -17,6 +17,12 @@ group = mavenGroup
 minecraft {}
 repositories {
     mavenCentral()
+
+    // Libblockattributes repo
+    maven {
+        name = "BuildCraft"
+        url = uri("https://mod-buildcraft.com/maven")
+    }
 }
 
 dependencies {
@@ -30,6 +36,8 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
     val fabricKotlinVersion: String by project
     modImplementation("net.fabricmc:fabric-language-kotlin:$fabricKotlinVersion")
+    val lbaVersion: String by project
+    modApi("alexiil.mc.lib:libblockattributes-all:$lbaVersion")
 }
 
 val remapJar = tasks.getByName<net.fabricmc.loom.task.RemapJarTask>("remapJar")
