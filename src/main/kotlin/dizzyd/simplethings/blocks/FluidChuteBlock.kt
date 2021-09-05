@@ -29,8 +29,8 @@ class FluidChuteBlock: BlockWithEntity(FabricBlockSettings.of(Material.METAL).st
         type: BlockEntityType<T>?
     ): BlockEntityTicker<T>? {
         return checkType(type, SimpleThings.FLUID_CHUTE_BLOCK_ENTITY,
-            {_, _, _, blockEntity ->
-                FluidChuteBlockEntity.tick(blockEntity) })
+            {world, _, _, blockEntity ->
+                FluidChuteBlockEntity.tick(world, blockEntity) })
     }
 
     override fun addAllAttributes(
