@@ -10,6 +10,10 @@ import alexiil.mc.lib.attributes.fluid.impl.SimpleFixedFluidInv
 import alexiil.mc.lib.attributes.fluid.volume.FluidKeys
 import alexiil.mc.lib.attributes.fluid.volume.FluidVolume
 import dizzyd.simplethings.SimpleThings
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil
+import net.fabricmc.fabric.impl.transfer.fluid.CauldronStorage
 import net.minecraft.block.BlockState
 import net.minecraft.block.Blocks
 import net.minecraft.block.entity.BlockEntity
@@ -33,10 +37,10 @@ class FluidChuteBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(Simpl
     }
 
     companion object {
-        val MOVE_AMOUNT = FluidAmount.of(100, 1000)
+        val MOVE_AMOUNT_LBA = FluidAmount.of(100, 1000)
 
         private fun shiftFluid(source: FluidExtractable, dest: FluidInsertable) {
-            var vol = source.attemptAnyExtraction(MOVE_AMOUNT, Simulation.SIMULATE)
+            var vol = source.attemptAnyExtraction(MOVE_AMOUNT_LBA, Simulation.SIMULATE)
             if (!vol.isEmpty) {
                 val remainingVol = dest.insert(vol)
                 source.extract(vol.amount().sub(remainingVol.amount()))
@@ -52,20 +56,34 @@ class FluidChuteBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(Simpl
         }
 
         fun tick(world: World, entity: FluidChuteBlockEntity) {
-            val source = FluidAttributes.EXTRACTABLE.getFromNeighbour(entity, Direction.UP)
-            val dest = FluidAttributes.INSERTABLE.getFromNeighbour(entity, Direction.DOWN)
-
-            if (source != EmptyFluidExtractable.NULL) {
-                shiftFluid(source, entity.fluidInv)
-                shiftFluid(entity.fluidInv, dest)
-            } else {
-                val abovePos = entity.pos.up()
-                val aboveBlockState = world.getBlockState(abovePos)
-                if (aboveBlockState == Blocks.LAVA_CAULDRON.defaultState) {
-                    drainCauldron(world, abovePos, FluidKeys.LAVA.withAmount(FluidAmount.BUCKET), dest)
-                } else if (aboveBlockState == Blocks.WATER_CAULDRON.defaultState) {
-                    drainCauldron(world, abovePos, FluidKeys.WATER.withAmount(FluidAmount.BUCKET), dest)
+            // First attempt to use Fabric's fluid transfer API
+            val sourceFluid = FluidStorage.SIDED.find(world, entity.pos.offset(Direction.UP), Direction.DOWN)
+            val destFluid = FluidStorage.SIDED.find(world, entity.pos.offset(Direction.DOWN), Direction.UP)
+            if (sourceFluid != null && destFluid != null) {
+                var moveAmount = FluidConstants.BUCKET / 20 // 1 bucket/second @ 20 tps
+                if (sourceFluid is CauldronStorage) {
+                    moveAmount = FluidConstants.BUCKET // Cauldrons can only move 1 bucket per txn
                 }
+                StorageUtil.move(sourceFluid, destFluid, { fluid -> true}, moveAmount, null)
+            }
+            else {
+                // Fallback to libblockattribute approach
+                val source = FluidAttributes.EXTRACTABLE.getFromNeighbour(entity, Direction.UP)
+                val dest = FluidAttributes.INSERTABLE.getFromNeighbour(entity, Direction.DOWN)
+                if (source != EmptyFluidExtractable.NULL) {
+                    shiftFluid(source, entity.fluidInv)
+                    shiftFluid(entity.fluidInv, dest)
+                } else {
+                    // Check for cauldron; Fabric's fluid transfer handles this transparently
+                    val abovePos = entity.pos.up()
+                    val aboveBlockState = world.getBlockState(abovePos)
+                    if (aboveBlockState == Blocks.LAVA_CAULDRON.defaultState) {
+                        drainCauldron(world, abovePos, FluidKeys.LAVA.withAmount(FluidAmount.BUCKET), dest)
+                    } else if (aboveBlockState == Blocks.WATER_CAULDRON.defaultState) {
+                        drainCauldron(world, abovePos, FluidKeys.WATER.withAmount(FluidAmount.BUCKET), dest)
+                    }
+                }
+
             }
         }
     }
