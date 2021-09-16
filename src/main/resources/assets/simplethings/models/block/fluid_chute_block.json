@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_bottom_top",
+  "textures": {
+    "side": "simplethings:block/fluid_chute_side",
+    "bottom": "simplethings:block/fluid_chute_top",
+    "top": "simplethings:block/fluid_chute_top"
+  }
+}
