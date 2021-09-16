@@ -19,16 +19,4 @@ class EntangledBlockEntity(pos: BlockPos, state: BlockState):
     override fun readNbt(nbt: NbtCompound?) {
         entangledId = nbt!!.getString("entangled_uuid")
     }
-
-    fun getDestination(): BlockPos? {
-        // Validate that the destination has the other entangled block
-        val dest = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(entangledId, pos)
-        if (dest != null) {
-            val destBlockEntity = world?.getBlockEntity(dest)
-            if (destBlockEntity is EntangledBlockEntity && destBlockEntity.entangledId == entangledId) {
-                return dest
-            }
-        }
-        return null
-    }
 }

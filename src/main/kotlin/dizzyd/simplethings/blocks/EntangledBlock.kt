@@ -82,20 +82,32 @@ class EntangledBlock : Block(FabricBlockSettings.of(Material.METAL).strength(4.0
 
         val blockEntity = world?.getBlockEntity(pos)
         if (blockEntity is EntangledBlockEntity) {
-            val dest = blockEntity.getDestination()
-            if (dest != null) {
-                // Teleport to the center of the destination block
-                entity?.teleport(
-                    dest.x.toDouble()+0.5,
-                    dest.y.toDouble()+1.0,
-                    dest.z.toDouble()+0.5)
-
-                // Update last teleport timestamp to prevent people getting stuck in loops
-                LAST_TELEPORT.put(entity.uuid, now)
-            } else {
-                LOGGER.info("Destination for $pos is null!")
+            if (doTransport(world, blockEntity.entangledId, entity as PlayerEntity)) {
+                // Transport was successful! Update last teleport timestamp to prevent
+                // people getting stuck in loops
+                EntangledBlock.LAST_TELEPORT.put(entity.uuid, now)
             }
         }
+    }
+
+    fun doTransport(world: World, destId: String, player: PlayerEntity): Boolean {
+        // First look up the destination; bail if no destination is found
+        // N.B. we must use the block the player is STANDING on
+        val destPos = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(destId, player?.blockPos.down())
+            ?: return false
+
+        // Validate that the destination is in the current dimension
+        val destEntity = world?.getBlockEntity(destPos)
+        if (destEntity is EntangledBlockEntity) {
+            player.teleport(
+                destPos.x.toDouble() + 0.5,
+                destPos.y.toDouble() + 1.0,
+                destPos.z.toDouble() + 0.5)
+
+            return true
+        }
+
+        return false
     }
 
     override fun getDroppedStacks(

@@ -7,13 +7,16 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.item.BlockItem
-import net.minecraft.item.ItemGroup
-import net.minecraft.item.ItemPlacementContext
-import net.minecraft.item.ItemStack
+import net.minecraft.item.*
 import net.minecraft.text.LiteralText
+import net.minecraft.util.ActionResult
+import net.minecraft.util.Hand
+import net.minecraft.util.TypedActionResult
+import net.minecraft.util.UseAction
 import net.minecraft.world.World
 import org.apache.logging.log4j.core.util.UuidUtil
+import java.lang.String.format
+import java.time.Instant
 import java.util.concurrent.ThreadLocalRandom
 
 class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().group(ItemGroup.MISC)){
@@ -50,7 +53,7 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
         val destPos = SimpleThings.ENTANGLED_BLOCK_MGR.getDestination(entangledId, context.blockPos)
             ?: return super.canPlace(context, state)
 
-        // We have a destination block position; ensure that it's registered in the current world
+        // We have a destination block position; ensure that it's registered in the current world/dimension
         val blockEntity = context.world.getBlockEntity(destPos)
         if (blockEntity is EntangledBlockEntity) {
             return super.canPlace(context, state)
@@ -61,5 +64,25 @@ class EntangledBlockItem(b: EntangledBlock) : BlockItem(b, FabricItemSettings().
         false)
 
         return false
+    }
+
+    override fun use(
+        world: World?,
+        user: PlayerEntity?,
+        hand: Hand?
+    ): TypedActionResult<ItemStack> {
+        if (world?.isClient == true) {
+            return super.use(world, user, hand)
+        }
+
+        // Enable the user to use a block in hand; this solves the problem of putting down a block in a remote
+        // place and being unable to remove it when you're done.
+        val stack = user!!.getStackInHand(hand)
+        val id = stack.nbt!!.getCompound(BlockItem.BLOCK_ENTITY_TAG_KEY).getString("entangled_uuid")
+        if (!SimpleThings.ENTANGLED_BLOCK.doTransport(world!!, id, user)) {
+            user?.sendMessage(LiteralText("No destination found in this dimension!"), false)
+        }
+
+        return super.use(world, user, hand)
     }
 }
